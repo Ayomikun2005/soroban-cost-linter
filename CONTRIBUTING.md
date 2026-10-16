@@ -95,7 +95,7 @@ If you prefer to set up the toolchain on your machine directly:
     make check
     ```
 
-    This runs `fmt-check` (`cargo fmt --all -- --check`), `lint` (`cargo clippy --workspace --all-targets -- -D warnings`), `test` (`cargo test --workspace`), and `check-docs` (`cargo run -p generate-lint-docs -- --check`) matching CI gates. See the [`Makefile`](./Makefile) for all available targets.
+    This runs `check-pins` (toolchain-pin drift guard), `fmt-check` (`cargo fmt --all -- --check`), `lint` (`cargo clippy --workspace --all-targets -- -D warnings`), `test` (`cargo test --workspace`), and `check-docs` (`cargo run -p generate-lint-docs -- --check`) matching CI gates. See the [`Makefile`](./Makefile) for all available targets.
 
 ### 3. Adding a New Lint
 - Read the [Scope: Clippy vs. soroban-cost-linter](./docs/scope_boundary.md) guide first. If a pattern is already covered by a Clippy lint and the Soroban cost story does not change the analysis, do not duplicate it here.
@@ -147,25 +147,31 @@ make check
 
 Or run the individual commands:
 
-1. Check formatting with rustfmt (or run `make fmt` to automatically fix formatting):
+1. Check the toolchain-pin drift guard (or run `make check-pins`):
+
+   ```bash
+   bash .github/scripts/validate-toolchain-pins.sh
+   ```
+
+2. Check formatting with rustfmt (or run `make fmt` to automatically fix formatting):
 
    ```bash
    cargo fmt --all -- --check
    ```
 
-2. Make sure Clippy passes with no warnings:
+3. Make sure Clippy passes with no warnings:
 
    ```bash
    cargo clippy --workspace --all-targets -- -D warnings
    ```
 
-3. Make sure the test suite passes:
+4. Make sure the test suite passes:
 
    ```bash
    cargo test --workspace
    ```
 
-4. Make sure documentation is up to date:
+5. Make sure documentation is up to date:
 
    ```bash
    cargo run -p generate-lint-docs -- --check
