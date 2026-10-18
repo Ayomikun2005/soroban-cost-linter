@@ -39,6 +39,7 @@ mod option_wrapping_in_storage;
 mod redundant_require_auth;
 mod require_auth_in_loop;
 mod soroban_redundant_storage_read;
+mod storage_read_modify_write;
 mod storage_write_without_read;
 mod string_concat_in_loop;
 mod unbounded_input_loop;
@@ -71,6 +72,7 @@ pub fn register_lints(sess: &rustc_session::Session, lint_store: &mut LintStore)
         REDUNDANT_ENV_CLONE,
         UNNECESSARY_HOST_FUNCTION_CALL,
         SOROBAN_REDUNDANT_STORAGE_READ,
+        STORAGE_READ_MODIFY_WRITE,
         STORAGE_WRITE_WITHOUT_READ,
         DISCARDED_STORAGE_READ,
         INSTANCE_STORAGE_FOR_UNBOUNDED_DATA,
@@ -111,6 +113,7 @@ pub fn register_lints(sess: &rustc_session::Session, lint_store: &mut LintStore)
     lint_store.register_late_pass(|_| {
         Box::new(soroban_redundant_storage_read::SorobanRedundantStorageRead)
     });
+    lint_store.register_late_pass(|_| Box::new(storage_read_modify_write::StorageReadModifyWrite));
     lint_store.register_late_pass(|_| Box::new(RedundantEnvClone));
     lint_store.register_late_pass(|_| Box::new(UnnecessaryHostFunctionCall));
     lint_store.register_late_pass(|_| Box::new(HostInLoop));
@@ -214,6 +217,12 @@ rustc_session::declare_lint! {
     pub SOROBAN_REDUNDANT_STORAGE_READ,
     Warn,
     "multiple sequential reads of the same storage key without modification"
+}
+
+rustc_session::declare_lint! {
+    pub STORAGE_READ_MODIFY_WRITE,
+    Warn,
+    "performs two or more read-modify-write cycles on the same storage key"
 }
 
 rustc_session::declare_lint! {
@@ -500,6 +509,12 @@ pub const LINT_METADATA: &[LintMeta] = &[
         rationale: "Repeatedly reading the same storage entry without intervening writes wastes ledger IO and CPU.",
     },
     LintMeta {
+        name: "storage_read_modify_write",
+        category: LintCategory::Storage,
+        description: "performs two or more read-modify-write cycles on the same storage key",
+        rationale: "A second full read-modify-write cycle on one key pays two metered storage operations for a value that never left the host; read once, accumulate, write once.",
+    },
+    LintMeta {
         name: "storage_write_without_read",
         category: LintCategory::Storage,
         description: "storage write without a corresponding read",
@@ -697,6 +712,7 @@ dylint_lint_impl! {
         REDUNDANT_ENV_CLONE,
         UNNECESSARY_HOST_FUNCTION_CALL,
         SOROBAN_REDUNDANT_STORAGE_READ,
+        STORAGE_READ_MODIFY_WRITE,
         STORAGE_WRITE_WITHOUT_READ,
         DISCARDED_STORAGE_READ,
         INSTANCE_STORAGE_FOR_UNBOUNDED_DATA,
