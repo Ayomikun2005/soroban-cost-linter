@@ -341,7 +341,7 @@ pub fn build_effective_lint_flags(
 
     for (lints, level_name, flag) in cli_groups {
         for lint in lints {
-            let lint = lint.replace('-', "_");
+            let lint = config::normalize_lint_name(lint);
             if !LINT_NAMES_SET.contains(lint.as_str()) {
                 let valid = LINT_NAMES.join(", ");
                 return Err(format!(
@@ -368,7 +368,7 @@ pub fn build_effective_lint_flags(
 
     if let Some(lints) = config.and_then(|cfg| cfg.lints.as_ref()) {
         for (lint, level) in lints {
-            let lint = lint.replace('-', "_");
+            let lint = config::normalize_lint_name(lint);
             if !LINT_NAMES_SET.contains(lint.as_str()) {
                 let valid = LINT_NAMES.join(", ");
                 return Err(format!(
@@ -1067,7 +1067,7 @@ fn main() {
 /// always reported on stderr as plain text, mirroring the other format-aware
 /// outputs.
 fn print_explanation(lint_name: &str, format: &OutputFormat) {
-    let normalized = lint_name.to_lowercase();
+    let normalized = config::normalize_lint_name(lint_name);
 
     let explanation = LINT_EXPLANATIONS.iter().find(|e| e.name == normalized);
 
