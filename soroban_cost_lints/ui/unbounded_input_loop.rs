@@ -201,7 +201,10 @@ fn bad_instance_try_update_over_map_values(env: Env, roles: Map<u32, u32>) {
 // --- Negative (should not warn): caller-driven iteration with only reads ---
 
 /// `keys()` still marks caller-driven iteration, but `get`/`has` are not in
-/// `WRITE_METHODS`, so a read-only loop stays silent.
+/// `WRITE_METHODS`, so a read-only loop stays silent. The `allow` silences the
+/// sibling read lint, which fires orthogonally on `has()` without a TTL
+/// extension; this fixture is about `unbounded_input_loop` only.
+#[allow(persistent_read_without_ttl_extension)]
 fn good_map_keys_loop_only_reads(env: Env, roles: Map<u32, u32>) {
     for k in roles.keys() {
         if env.storage().persistent().has(&k) {
